@@ -58,7 +58,7 @@ const DeleteModal: React.FC<DeleteModalProps> = ({
       </Modal.Header>
 
       <Modal.Body>
-        <p className="text-slate-300">{message}</p>
+        <p className="text-slate-900">{message}</p>
       </Modal.Body>
 
       <Modal.Footer>

@@ -1,4 +1,4 @@
-export const BASE_URL = "https://090c35a84ec2833c.mokky.dev";
+export const BASE_URL = "https://fa62ade41818f5b6.mokky.dev";
 
 // товары
 export const productsApi = `${BASE_URL}/products`;

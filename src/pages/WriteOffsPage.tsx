@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Button,
   Form,
@@ -8,11 +8,13 @@ import {
   Schema,
   SelectPicker,
   Table,
-  Tooltip,
-  Whisper,
 } from "rsuite";
 import { MdDeleteOutline } from "react-icons/md";
-import { PackageMinus } from "lucide-react";
+import {
+  PackageMinus,
+  Boxes,
+  TrendingDown,
+} from "lucide-react";
 import "rsuite/dist/rsuite.min.css";
 
 import { useAppDispatch, useAppSelector } from "../hooks/hooks";
@@ -23,26 +25,21 @@ import {
 } from "../redux/slices/writeOffsSlice";
 import { getProducts } from "../redux/slices/productsSlice";
 import DeleteModal from "../components/deleteModal";
+
 const { Column, HeaderCell, Cell } = Table;
 const { NumberType, StringType } = Schema.Types;
 
 const model = Schema.Model({
   productId: NumberType().isRequired("Выберите товар"),
-  quantity: NumberType("Количество должно быть числом")
+  quantity: NumberType()
     .isRequired("Укажите количество")
     .min(1, "Количество должно быть больше 0"),
-  reason: StringType().isRequired("Укажите причину списания"),
+  reason: StringType().isRequired("Укажите причину"),
   date: StringType().isRequired("Укажите дату"),
-  comment: StringType().isRequired("Укажите комментарий"),
+  comment: StringType().isRequired("Комментарий обязателен"),
 });
 
-const WriteOffModalForm = ({
-  open,
-  onClose,
-}: {
-  open: boolean;
-  onClose: () => void;
-}) => {
+const WriteOffModalForm = ({ open, onClose }: any) => {
   const dispatch = useAppDispatch();
   const formRef = useRef<any>(null);
 
@@ -76,22 +73,23 @@ const WriteOffModalForm = ({
   const handleSubmit = () => {
     if (!formRef.current?.check()) return;
 
-    const payload: WriteOff = {
-      productId: Number(formValue.productId),
-      quantity: Number(formValue.quantity),
-      reason: String(formValue.reason || "").trim(),
-      date: String(formValue.date),
-      comment: String(formValue.comment || "").trim(),
-    };
+    dispatch(
+      createWriteOff({
+        productId: Number(formValue.productId),
+        quantity: Number(formValue.quantity),
+        reason: String(formValue.reason),
+        date: String(formValue.date),
+        comment: String(formValue.comment),
+      })
+    );
 
-    dispatch(createWriteOff(payload));
     onClose();
   };
 
   return (
-    <Modal open={open} onClose={onClose} size="sm" className="product-dark-modal">
+    <Modal open={open} onClose={onClose} size="sm">
       <Modal.Header>
-        <Modal.Title>Добавить списание</Modal.Title>
+        <Modal.Title>Новое списание</Modal.Title>
       </Modal.Header>
 
       <Modal.Body>
@@ -100,11 +98,10 @@ const WriteOffModalForm = ({
           ref={formRef}
           model={model}
           formValue={formValue}
-          onChange={(value) => setFormValue(value as Partial<WriteOff>)}
-          className="rs-dark-form"
+          onChange={(value) => setFormValue(value)}
         >
           <Form.Group>
-            <Form.ControlLabel style={{ color: "white" }}>Товар</Form.ControlLabel>
+            <Form.ControlLabel>Товар</Form.ControlLabel>
             <SelectPicker
               data={productOptions}
               value={formValue.productId as number}
@@ -115,42 +112,38 @@ const WriteOffModalForm = ({
                 }))
               }
               style={{ width: "100%" }}
-              placeholder="Выберите товар"
-              cleanable={false}
             />
           </Form.Group>
 
           <Form.Group>
-            <Form.ControlLabel style={{ color: "white" }}>Количество</Form.ControlLabel>
-            <Form.Control name="quantity" accepter={Input} type="number" min={1} />
+            <Form.ControlLabel>Количество</Form.ControlLabel>
+            <Form.Control name="quantity" accepter={Input} type="number" />
           </Form.Group>
 
           <Form.Group>
-            <Form.ControlLabel style={{ color: "white" }}>Причина списания</Form.ControlLabel>
+            <Form.ControlLabel>Причина</Form.ControlLabel>
             <Form.Control name="reason" accepter={Input} />
           </Form.Group>
 
           <Form.Group>
-            <Form.ControlLabel style={{ color: "white" }}>Дата</Form.ControlLabel>
+            <Form.ControlLabel>Дата</Form.ControlLabel>
             <Form.Control name="date" accepter={Input} type="date" />
           </Form.Group>
 
           <Form.Group>
-            <Form.ControlLabel style={{ color: "white" }}>Комментарий</Form.ControlLabel>
+            <Form.ControlLabel>Комментарий</Form.ControlLabel>
             <Form.Control name="comment" accepter={Input} />
           </Form.Group>
         </Form>
       </Modal.Body>
 
       <Modal.Footer>
-        <div className="flex items-center justify-end gap-3">
-          <Button appearance="subtle" onClick={onClose}>
-            Отмена
-          </Button>
-          <Button appearance="primary" onClick={handleSubmit}>
-            Добавить
-          </Button>
-        </div>
+        <Button appearance="subtle" onClick={onClose}>
+          Отмена
+        </Button>
+        <Button appearance="primary" onClick={handleSubmit}>
+          Сохранить
+        </Button>
       </Modal.Footer>
     </Modal>
   );
@@ -159,143 +152,166 @@ const WriteOffModalForm = ({
 const WriteOffsPage = () => {
   const dispatch = useAppDispatch();
 
-  const { writeOffs, isLoading, error } = useAppSelector(
+  const { writeOffs } = useAppSelector(
     (state) => state.writeOffsReducer
   );
   const { products } = useAppSelector((state) => state.productsReducer);
 
   const [showModal, setShowModal] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<WriteOff | null>(null);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     dispatch(getWriteOffs());
     dispatch(getProducts());
   }, [dispatch]);
 
-  const getProductName = (productId: number) => {
-    const product = products.find((item) => Number(item.id) === Number(productId));
-    return product?.name || "Неизвестный товар";
+  const getProductName = (id: number) => {
+    const p = products.find((i) => Number(i.id) === Number(id));
+    return p?.name || "Не найден";
   };
 
-  const handleAdd = () => {
-    setShowModal(true);
-  };
+  const filtered = useMemo(() => {
+    const val = search.toLowerCase();
 
-  const handleDelete = (writeOff: WriteOff) => {
-    setDeleteTarget(writeOff);
-  };
+    return writeOffs.filter(
+      (w) =>
+        getProductName(w.productId).toLowerCase().includes(val) ||
+        w.reason.toLowerCase().includes(val) ||
+        w.comment.toLowerCase().includes(val)
+    );
+  }, [writeOffs, search, products]);
+
+  const totalUnits = useMemo(
+    () => writeOffs.reduce((sum, i) => sum + Number(i.quantity), 0),
+    [writeOffs]
+  );
 
   return (
-    <div className="text-white">
-      <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h2 className="text-3xl font-bold">Списания</h2>
-          <p className="text-slate-400 mt-2">
-            Учет списаний товаров со склада с автоматическим уменьшением остатков.
+    <div className="text-slate-900">
+
+      {/* HEADER */}
+      <div className="grid xl:grid-cols-[1.1fr_0.9fr] gap-8 mb-8">
+
+        <div className="bg-white border rounded-[30px] p-8">
+          <h2 className="text-3xl font-bold">
+            Списание товаров
+          </h2>
+
+          <p className="mt-4 text-slate-600">
+            Контроль убытков и списаний со склада.
           </p>
+
+          <div className="mt-6 flex gap-4">
+            <Button
+              appearance="primary"
+              color="red"
+              size="lg"
+              style={{ width: "270px" }}
+              onClick={() => setShowModal(true)}
+              startIcon={<PackageMinus size={18} />}
+            >
+              Списать товар
+            </Button>
+
+            <Input
+              placeholder="Поиск..."
+              value={search}
+              onChange={setSearch}
+            />
+          </div>
         </div>
 
-        <Button
-          appearance="primary"
-          color="cyan"
-          size="lg"
-          onClick={handleAdd}
-          className="!rounded-xl"
-          startIcon={<PackageMinus size={18} />}
-        >
-          Добавить списание
-        </Button>
+        {/* STATS */}
+        <div className="bg-slate-50 border rounded-[30px] p-8">
+          <h3 className="text-xl font-bold">Сводка</h3>
+
+          <div className="mt-6 grid grid-cols-2 gap-4">
+            <div className="bg-white p-5 rounded-xl">
+              <TrendingDown />
+              <p className="text-2xl font-bold mt-2">
+                {writeOffs.length}
+              </p>
+              <p className="text-sm text-slate-500">операций</p>
+            </div>
+
+            <div className="bg-white p-5 rounded-xl">
+              <Boxes />
+              <p className="text-2xl font-bold mt-2">
+                {totalUnits}
+              </p>
+              <p className="text-sm text-slate-500">списано</p>
+            </div>
+          </div>
+
+          <div className="mt-4 bg-white p-4 rounded-xl">
+            <div className="text-sm text-slate-500">
+              Списания уменьшают остаток товара
+            </div>
+            <div className="mt-2 text-slate-900">
+              Контролируйте причины списаний для анализа потерь.
+            </div>
+          </div>
+        </div>
       </div>
 
-      {isLoading ? (
-        <div className="rounded-3xl border border-slate-800 bg-slate-900 p-10 text-center text-slate-400">
-          Загрузка списаний...
-        </div>
-      ) : error ? (
-        <div className="rounded-3xl border border-red-500/20 bg-red-500/10 p-6 text-red-300">
-          {error}
-        </div>
-      ) : (
-        <div className="overflow-hidden rounded-3xl border border-slate-800 bg-slate-900">
-          <Table
-            data={writeOffs}
-            autoHeight
-            bordered
-            cellBordered
-            wordWrap="break-word"
-            hover
-          >
-            <Column width={90} align="center" fixed>
-              <HeaderCell>ID</HeaderCell>
-              <Cell dataKey="id" />
-            </Column>
+      {/* TABLE */}
+      <div className="bg-white border rounded-[30px] p-6">
+        <Table data={filtered} autoHeight bordered cellBordered hover>
 
-            <Column flexGrow={1.8} minWidth={260}>
-              <HeaderCell>Товар</HeaderCell>
-              <Cell>
-                {(rowData: WriteOff) => getProductName(rowData.productId)}
-              </Cell>
-            </Column>
+          <Column width={80} align="center">
+            <HeaderCell>ID</HeaderCell>
+            <Cell dataKey="id" />
+          </Column>
 
-            <Column width={120} align="center">
-              <HeaderCell>Кол-во</HeaderCell>
-              <Cell dataKey="quantity" />
-            </Column>
+          <Column flexGrow={1.5}>
+            <HeaderCell>Товар</HeaderCell>
+            <Cell>
+              {(row: WriteOff) => getProductName(row.productId)}
+            </Cell>
+          </Column>
 
-            <Column flexGrow={1.2} minWidth={180}>
-              <HeaderCell>Причина</HeaderCell>
-              <Cell dataKey="reason" />
-            </Column>
+          <Column width={120}>
+            <HeaderCell>Кол-во</HeaderCell>
+            <Cell dataKey="quantity" />
+          </Column>
 
-            <Column width={150} align="center">
-              <HeaderCell>Дата</HeaderCell>
-              <Cell dataKey="date" />
-            </Column>
+          <Column flexGrow={1}>
+            <HeaderCell>Причина</HeaderCell>
+            <Cell dataKey="reason" />
+          </Column>
 
-            <Column flexGrow={1.8} minWidth={260}>
-              <HeaderCell>Комментарий</HeaderCell>
-              <Cell dataKey="comment" />
-            </Column>
+          <Column width={140}>
+            <HeaderCell>Дата</HeaderCell>
+            <Cell dataKey="date" />
+          </Column>
 
-            <Column width={130} align="center" fixed="right">
-              <HeaderCell>Действия</HeaderCell>
-              <Cell>
-                {(rowData: WriteOff) => (
-                  <div className="flex items-center justify-center gap-2 pt-2">
-                    <Whisper
-                      placement="top"
-                      trigger="hover"
-                      speaker={<Tooltip>Удалить</Tooltip>}
-                    >
-                      <Button
-                        appearance="subtle"
-                        onClick={() => handleDelete(rowData)}
-                      >
-                        <MdDeleteOutline color="#ef4444" size={20} />
-                      </Button>
-                    </Whisper>
-                  </div>
-                )}
-              </Cell>
-            </Column>
-          </Table>
-        </div>
-      )}
+          <Column flexGrow={1.5}>
+            <HeaderCell>Комментарий</HeaderCell>
+            <Cell dataKey="comment" />
+          </Column>
 
-      <WriteOffModalForm
-        open={showModal}
-        onClose={() => {
-          setShowModal(false);
-        }}
-      />
+          <Column width={120} align="center">
+            <HeaderCell>Действия</HeaderCell>
+            <Cell>
+              {(row: WriteOff) => (
+                <Button onClick={() => setDeleteTarget(row)}>
+                  <MdDeleteOutline />
+                </Button>
+              )}
+            </Cell>
+          </Column>
+
+        </Table>
+      </div>
+
+      <WriteOffModalForm open={showModal} onClose={() => setShowModal(false)} />
 
       <DeleteModal
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
         id={deleteTarget?.id?.toString() || ""}
         deleteFunc="deleteWriteOff"
-        title="Удалить списание"
-        message={`Вы уверены, что хотите удалить списание #${deleteTarget?.id}?`}
       />
     </div>
   );

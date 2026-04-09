@@ -1,125 +1,157 @@
 import { Link } from "react-router-dom";
-import { Warehouse, Mail, Phone, MapPin, ShieldCheck } from "lucide-react";
+import {
+  ArrowUpRight,
+  Mail,
+  MapPin,
+  Orbit,
+  Phone,
+  Radar,
+} from "lucide-react";
+
+const quickLinks = [
+  { label: "Главная", path: "/" },
+  { label: "О платформе", path: "/about-system" },
+  { label: "Контакты", path: "/contacts" },
+  { label: "Политика конфиденциальности", path: "/privacy-policy" },
+];
+
+const systemLinks = [
+  "Мониторинг запасов",
+  "Контроль критических остатков",
+  "История движения товаров",
+  "Управление поставками",
+];
 
 const Footer = () => {
   return (
-    <footer className="border-t border-slate-800 bg-slate-950 text-white mt-0">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-10">
-          <div>
-            <Link to="/" className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-cyan-400/20 bg-cyan-500/10">
-                <Warehouse className="w-6 h-6 text-cyan-400" />
+    <footer className="border-t border-slate-200 bg-slate-50 text-slate-900">
+      <div className="max-w-7xl mx-auto px-4 py-14">
+        <div className="rounded-[32px] border border-slate-200 bg-white p-8 md:p-10 shadow-sm">
+          <div className="grid xl:grid-cols-[1.1fr_0.9fr] gap-10">
+            <div>
+              <div className="flex items-center gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-cyan-700">
+                  <Orbit className="w-5 h-5" />
+                </div>
+
+                <div>
+                  <div className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-900">
+                    Stock Vision
+                  </div>
+                  <div className="text-sm text-slate-500">
+                    Платформа мониторинга запасов
+                  </div>
+                </div>
               </div>
 
-              <div className="flex flex-col leading-none">
-                <span className="text-lg font-bold">SCLAD-UCHET</span>
-                <span className="text-sm text-slate-400">
-                  Система складского учета
-                </span>
+              <p className="mt-6 max-w-xl text-slate-600 leading-8">
+                Цифровая платформа для мониторинга и управления складскими
+                запасами, ориентированная на прозрачность процессов, контроль
+                движения товаров и повышение точности работы с данными.
+              </p>
+
+              <div className="mt-8 inline-flex items-center gap-2 rounded-full border border-cyan-100 bg-cyan-50 px-4 py-2 text-sm text-cyan-700">
+                <Radar className="w-4 h-4" />
+                наблюдение за состоянием запасов в единой системе
               </div>
-            </Link>
 
-            <p className="mt-5 text-sm leading-7 text-slate-400 max-w-sm">
-              Веб-приложение для учета товаров на складе с автоматизацией
-              поступлений и списаний, контролем остатков и хранением истории
-              операций в единой административной панели.
-            </p>
-
-            <div className="mt-5 inline-flex items-center gap-2 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 px-4 py-2 text-sm text-emerald-300">
-              <ShieldCheck className="w-4 h-4" />
-              Контроль складских процессов
-            </div>
-          </div>
-
-          <div>
-            <h4 className="text-base font-semibold text-white">Навигация</h4>
-            <ul className="mt-5 space-y-3 text-sm text-slate-400">
-              <li>
-                <Link to="/" className="hover:text-white transition-colors">
-                  Главная
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/about-us"
-                  className="hover:text-white transition-colors"
-                >
-                  О системе
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/contact-us"
-                  className="hover:text-white transition-colors"
-                >
-                  Контакты
-                </Link>
-              </li>
-              <li>
+              <div className="mt-8 flex flex-col sm:flex-row gap-3">
                 <Link
                   to="/login"
-                  className="hover:text-white transition-colors"
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
                 >
-                  Вход в систему
+                  Открыть систему
+                  <ArrowUpRight className="w-4 h-4" />
                 </Link>
-              </li>
-              <li>
+
                 <Link
-                  to="/privacy-policy"
-                  className="hover:text-white transition-colors"
+                  to="/contacts"
+                  className="inline-flex items-center justify-center rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-800 transition hover:bg-slate-100"
                 >
-                  Политика конфиденциальности
+                  Связаться с нами
                 </Link>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="text-base font-semibold text-white">
-              Основные модули
-            </h4>
-            <ul className="mt-5 space-y-3 text-sm text-slate-400">
-              <li>Dashboard и аналитика</li>
-              <li>Учет товаров</li>
-              <li>Категории и поставщики</li>
-              <li>Поступления и списания</li>
-              <li>История операций</li>
-              <li>Контроль минимального остатка</li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="text-base font-semibold text-white">Контактные данные</h4>
-
-            <div className="mt-5 space-y-4 text-sm text-slate-400">
-              <div className="flex items-start gap-3">
-                <MapPin className="w-5 h-5 text-cyan-400 mt-0.5 shrink-0" />
-                <span>Бишкек, Кыргызстан</span>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <Mail className="w-5 h-5 text-cyan-400 mt-0.5 shrink-0" />
-                <span>info@sclad-uchet.kg</span>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <Phone className="w-5 h-5 text-cyan-400 mt-0.5 shrink-0" />
-                <span>+996 509 788 080</span>
               </div>
             </div>
 
-            <p className="mt-5 text-sm leading-7 text-slate-500">
-              Система предназначена для автоматизации учета товарных остатков,
-              операций поступления и списания, а также повышения точности
-              складского контроля.
-            </p>
-          </div>
-        </div>
+            <div className="grid sm:grid-cols-2 gap-8">
+              <div>
+                <h4 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  Разделы
+                </h4>
+                <ul className="mt-5 space-y-3">
+                  {quickLinks.map((item) => (
+                    <li key={item.path}>
+                      <Link
+                        to={item.path}
+                        className="text-slate-700 transition hover:text-cyan-700"
+                      >
+                        {item.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
 
-        <div className="mt-10 border-t border-slate-800 pt-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-sm text-slate-500">
-          <p>© {new Date().getFullYear()} SCLAD-UCHET. Все права защищены.</p>
-          <p>Разработка веб-системы учета товаров на складе</p>
+              <div>
+                <h4 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  Возможности
+                </h4>
+                <ul className="mt-5 space-y-3">
+                  {systemLinks.map((item) => (
+                    <li key={item} className="text-slate-700">
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="sm:col-span-2">
+                <h4 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  Контактные данные
+                </h4>
+
+                <div className="mt-5 grid md:grid-cols-3 gap-4">
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <div className="flex items-center gap-3">
+                      <MapPin className="w-5 h-5 text-cyan-700" />
+                      <span className="text-sm text-slate-700">
+                        Бишкек, Кыргызстан
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <div className="flex items-center gap-3">
+                      <Mail className="w-5 h-5 text-cyan-700" />
+                      <span className="text-sm text-slate-700">
+                        info@stockvision.kg
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <div className="flex items-center gap-3">
+                      <Phone className="w-5 h-5 text-cyan-700" />
+                      <span className="text-sm text-slate-700">
+                        +996 708 796 876
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <p className="mt-5 text-sm leading-7 text-slate-500">
+                  Платформа предназначена для повышения прозрачности складских
+                  процессов и улучшения качества управления запасами в
+                  организации.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-10 border-t border-slate-200 pt-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-sm text-slate-500">
+            <p>© {new Date().getFullYear()} Stock Vision. Все права защищены.</p>
+            <p>Система мониторинга и управления складскими запасами</p>
+          </div>
         </div>
       </div>
     </footer>

@@ -9,7 +9,13 @@ import {
   Input,
   SelectPicker,
 } from "rsuite";
-import { ImagePlus, Package2 } from "lucide-react";
+import {
+  ImagePlus,
+  Package2,
+  Boxes,
+  BadgeDollarSign,
+  FileText,
+} from "lucide-react";
 import { useAppDispatch, useAppSelector } from "../hooks/hooks";
 import {
   createProduct,
@@ -110,7 +116,7 @@ const ProductModalForm: React.FC<ProductModalFormProps> = ({
       price: Number(formValue.price || 0),
       quantity: Number(formValue.quantity || 0),
       minStock: Number(formValue.minStock || 0),
-      image: imageUrl || "https://placehold.co/100",
+      image: imageUrl || "https://placehold.co/600x400",
       description: String(formValue.description || "").trim(),
     };
 
@@ -146,19 +152,20 @@ const ProductModalForm: React.FC<ProductModalFormProps> = ({
   }));
 
   return (
-    <Modal open={open} onClose={onClose} size="md" overflow={false}>
+    <Modal open={open} onClose={onClose} size="lg" overflow={false}>
       <Modal.Header>
         <Modal.Title>
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-500">
-              <Package2 size={20} />
+          <div className="flex items-start gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-cyan-100 bg-cyan-50 text-cyan-700">
+              <Package2 size={22} />
             </div>
+
             <div>
-              <div className="text-2xl font-semibold text-slate-800">
-                {productData ? "Редактировать товар" : "Добавить товар"}
+              <div className="text-2xl font-semibold text-slate-900">
+                {productData ? "Редактирование позиции" : "Новая позиция склада"}
               </div>
               <p className="mt-1 text-sm text-slate-500">
-                Заполните данные товара для сохранения в системе
+                Заполните информацию о товаре для сохранения в системе
               </p>
             </div>
           </div>
@@ -166,133 +173,162 @@ const ProductModalForm: React.FC<ProductModalFormProps> = ({
       </Modal.Header>
 
       <Modal.Body>
-        <div className="mb-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-          {imageUrl ? (
-            <img
-              src={imageUrl}
-              alt="product"
-              className="mb-4 h-[220px] w-full rounded-xl object-cover border border-slate-200"
-            />
-          ) : (
-            <div className="mb-4 flex h-[220px] w-full items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white text-slate-400">
-              Нет изображения
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+          <div className="rounded-[24px] border border-slate-200 bg-slate-50 p-5">
+            <div className="mb-4 flex items-center gap-2 text-sm font-medium text-slate-700">
+              <ImagePlus size={16} />
+              Изображение товара
             </div>
-          )}
 
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <Uploader
-              action="https://090c35a84ec2833c.mokky.dev/uploads"
-              name="file"
-              autoUpload
-              fileListVisible={false}
-              onSuccess={(res: any) => {
-                const url = res?.url;
-                if (url) setImageUrl(url);
-              }}
-            >
-              <Button appearance="ghost" className="w-full sm:w-auto">
-                <span className="flex items-center gap-2">
-                  <ImagePlus size={16} />
-                  Загрузить фото
-                </span>
-              </Button>
-            </Uploader>
+            {imageUrl ? (
+              <img
+                src={imageUrl}
+                alt="product"
+                className="h-[240px] w-full rounded-2xl border border-slate-200 object-cover bg-white"
+              />
+            ) : (
+              <div className="flex h-[240px] w-full items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white text-slate-400">
+                Изображение не выбрано
+              </div>
+            )}
 
-            <Input
-              placeholder="Или вставьте ссылку на изображение"
-              value={imageUrl}
-              onChange={(value) => setImageUrl(value)}
-            />
+            <div className="mt-4 flex flex-col gap-3">
+              <Uploader
+                action="https://fa62ade41818f5b6.mokky.dev/uploads"
+                name="file"
+                autoUpload
+                fileListVisible={false}
+                onSuccess={(res: any) => {
+                  const url = res?.url;
+                  if (url) setImageUrl(url);
+                }}
+              >
+                <Button appearance="ghost" block>
+                  <span className="flex items-center justify-center gap-2">
+                    <ImagePlus size={16} />
+                    Загрузить изображение
+                  </span>
+                </Button>
+              </Uploader>
+
+              <Input
+                placeholder="Или вставьте ссылку на изображение"
+                value={imageUrl}
+                onChange={(value) => setImageUrl(value)}
+              />
+            </div>
           </div>
+
+          <Form
+            fluid
+            ref={formRef}
+            model={model}
+            formValue={formValue}
+            onChange={(value) => setFormValue(value as Partial<Product>)}
+          >
+            <div className="rounded-[24px] border border-slate-200 bg-white p-5">
+              <div className="mb-4 flex items-center gap-2 text-sm font-medium text-slate-700">
+                <Boxes size={16} />
+                Основные данные
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <Form.Group>
+                  <Form.ControlLabel>Название товара</Form.ControlLabel>
+                  <Form.Control name="name" />
+                </Form.Group>
+
+                <Form.Group>
+                  <Form.ControlLabel>Артикул</Form.ControlLabel>
+                  <Form.Control name="article" />
+                </Form.Group>
+
+                <Form.Group>
+                  <Form.ControlLabel>Категория</Form.ControlLabel>
+                  <SelectPicker
+                    data={categoryOptions}
+                    value={formValue.categoryId as number}
+                    onChange={(value) =>
+                      setFormValue((prev) => ({
+                        ...prev,
+                        categoryId: Number(value),
+                      }))
+                    }
+                    style={{ width: "100%" }}
+                    placeholder="Выберите категорию"
+                    cleanable={false}
+                  />
+                </Form.Group>
+
+                <Form.Group>
+                  <Form.ControlLabel>Поставщик</Form.ControlLabel>
+                  <SelectPicker
+                    data={supplierOptions}
+                    value={formValue.supplierId as number}
+                    onChange={(value) =>
+                      setFormValue((prev) => ({
+                        ...prev,
+                        supplierId: Number(value),
+                      }))
+                    }
+                    style={{ width: "100%" }}
+                    placeholder="Выберите поставщика"
+                    cleanable={false}
+                  />
+                </Form.Group>
+
+                <Form.Group>
+                  <Form.ControlLabel>Единица измерения</Form.ControlLabel>
+                  <Form.Control name="unit" />
+                </Form.Group>
+              </div>
+            </div>
+
+            <div className="mt-5 rounded-[24px] border border-slate-200 bg-white p-5">
+              <div className="mb-4 flex items-center gap-2 text-sm font-medium text-slate-700">
+                <BadgeDollarSign size={16} />
+                Остатки и стоимость
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                <Form.Group>
+                  <Form.ControlLabel>Цена</Form.ControlLabel>
+                  <Form.Control name="price" type="number" min={0} />
+                </Form.Group>
+
+                <Form.Group>
+                  <Form.ControlLabel>Количество</Form.ControlLabel>
+                  <Form.Control name="quantity" type="number" min={0} />
+                </Form.Group>
+
+                <Form.Group>
+                  <Form.ControlLabel>Мин. остаток</Form.ControlLabel>
+                  <Form.Control name="minStock" type="number" min={0} />
+                </Form.Group>
+              </div>
+            </div>
+
+            <div className="mt-5 rounded-[24px] border border-slate-200 bg-white p-5">
+              <div className="mb-4 flex items-center gap-2 text-sm font-medium text-slate-700">
+                <FileText size={16} />
+                Описание
+              </div>
+
+              <Form.Group className="mb-0">
+                <Form.Control name="description" accepter={Textarea} rows={5} />
+              </Form.Group>
+            </div>
+          </Form>
         </div>
-
-        <Form
-          fluid
-          ref={formRef}
-          model={model}
-          formValue={formValue}
-          onChange={(value) => setFormValue(value as Partial<Product>)}
-        >
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <Form.Group>
-              <Form.ControlLabel>Название товара</Form.ControlLabel>
-              <Form.Control name="name" />
-            </Form.Group>
-
-            <Form.Group>
-              <Form.ControlLabel>Артикул</Form.ControlLabel>
-              <Form.Control name="article" />
-            </Form.Group>
-
-            <Form.Group>
-              <Form.ControlLabel>Категория</Form.ControlLabel>
-              <SelectPicker
-                data={categoryOptions}
-                value={formValue.categoryId as number}
-                onChange={(value) =>
-                  setFormValue((prev) => ({
-                    ...prev,
-                    categoryId: Number(value),
-                  }))
-                }
-                style={{ width: "100%" }}
-                placeholder="Выберите категорию"
-                cleanable={false}
-              />
-            </Form.Group>
-
-            <Form.Group>
-              <Form.ControlLabel>Поставщик</Form.ControlLabel>
-              <SelectPicker
-                data={supplierOptions}
-                value={formValue.supplierId as number}
-                onChange={(value) =>
-                  setFormValue((prev) => ({
-                    ...prev,
-                    supplierId: Number(value),
-                  }))
-                }
-                style={{ width: "100%" }}
-                placeholder="Выберите поставщика"
-                cleanable={false}
-              />
-            </Form.Group>
-
-            <Form.Group>
-              <Form.ControlLabel>Единица измерения</Form.ControlLabel>
-              <Form.Control name="unit" />
-            </Form.Group>
-
-            <Form.Group>
-              <Form.ControlLabel>Цена</Form.ControlLabel>
-              <Form.Control name="price" type="number" min={0} />
-            </Form.Group>
-
-            <Form.Group>
-              <Form.ControlLabel>Количество</Form.ControlLabel>
-              <Form.Control name="quantity" type="number" min={0} />
-            </Form.Group>
-
-            <Form.Group>
-              <Form.ControlLabel>Минимальный остаток</Form.ControlLabel>
-              <Form.Control name="minStock" type="number" min={0} />
-            </Form.Group>
-          </div>
-
-          <Form.Group className="mt-2">
-            <Form.ControlLabel>Описание</Form.ControlLabel>
-            <Form.Control name="description" accepter={Textarea} rows={4} />
-          </Form.Group>
-        </Form>
       </Modal.Body>
 
       <Modal.Footer>
         <div className="flex items-center justify-end gap-3">
-          <Button appearance="primary" color="red" onClick={onClose}>
+          <Button appearance="subtle" onClick={onClose}>
             Отмена
           </Button>
           <Button appearance="primary" onClick={handleSubmit}>
-            {productData ? "Сохранить изменения" : "Добавить товар"}
+            {productData ? "Сохранить изменения" : "Создать позицию"}
           </Button>
         </div>
       </Modal.Footer>

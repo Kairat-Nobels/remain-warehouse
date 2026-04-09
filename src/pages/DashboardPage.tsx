@@ -1,14 +1,13 @@
-import { useEffect } from "react";
-import { Panel, Table, Tag } from "rsuite";
+import { useEffect, useMemo } from "react";
+import { Table, Tag } from "rsuite";
 import {
-  Package,
-  Tags,
-  Truck,
-  Inbox,
-  ArrowUpDown,
-  MessageSquare,
+  Activity,
   AlertTriangle,
-  Warehouse,
+  Boxes,
+  ChartColumn,
+  CircleGauge,
+  PackageCheck,
+  Truck,
 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "../hooks/hooks";
 import { getProducts } from "../redux/slices/productsSlice";
@@ -16,54 +15,8 @@ import { getCategories } from "../redux/slices/categoriesSlice";
 import { getSuppliers } from "../redux/slices/suppliersSlice";
 import { getReceipts } from "../redux/slices/receiptsSlice";
 import { getWriteOffs } from "../redux/slices/writeOffsSlice";
-import { getFeedback } from "../redux/slices/feedbackSlice";
 
 const { Column, HeaderCell, Cell } = Table;
-
-const statCards = [
-  {
-    title: "Товары",
-    key: "products",
-    icon: <Package className="w-6 h-6 text-cyan-400" />,
-    bg: "from-cyan-500/10 to-cyan-400/5",
-    border: "border-cyan-500/20",
-  },
-  {
-    title: "Категории",
-    key: "categories",
-    icon: <Tags className="w-6 h-6 text-violet-400" />,
-    bg: "from-violet-500/10 to-violet-400/5",
-    border: "border-violet-500/20",
-  },
-  {
-    title: "Поставщики",
-    key: "suppliers",
-    icon: <Truck className="w-6 h-6 text-emerald-400" />,
-    bg: "from-emerald-500/10 to-emerald-400/5",
-    border: "border-emerald-500/20",
-  },
-  {
-    title: "Поступления",
-    key: "receipts",
-    icon: <Inbox className="w-6 h-6 text-blue-400" />,
-    bg: "from-blue-500/10 to-blue-400/5",
-    border: "border-blue-500/20",
-  },
-  {
-    title: "Списания",
-    key: "writeOffs",
-    icon: <ArrowUpDown className="w-6 h-6 text-amber-400" />,
-    bg: "from-amber-500/10 to-amber-400/5",
-    border: "border-amber-500/20",
-  },
-  {
-    title: "Сообщения",
-    key: "feedback",
-    icon: <MessageSquare className="w-6 h-6 text-pink-400" />,
-    bg: "from-pink-500/10 to-pink-400/5",
-    border: "border-pink-500/20",
-  },
-];
 
 const DashboardPage = () => {
   const dispatch = useAppDispatch();
@@ -75,7 +28,6 @@ const DashboardPage = () => {
   const { suppliers } = useAppSelector((state) => state.suppliersReducer);
   const { receipts } = useAppSelector((state) => state.receiptsReducer);
   const { writeOffs } = useAppSelector((state) => state.writeOffsReducer);
-  const { feedback } = useAppSelector((state) => state.feedbackReducer);
 
   useEffect(() => {
     dispatch(getProducts());
@@ -83,94 +35,187 @@ const DashboardPage = () => {
     dispatch(getSuppliers());
     dispatch(getReceipts());
     dispatch(getWriteOffs());
-    dispatch(getFeedback());
   }, [dispatch]);
 
-  const lowStockProducts = products.filter(
-    (item) => Number(item.quantity) <= Number(item.minStock)
+  const lowStockProducts = useMemo(
+    () =>
+      products.filter(
+        (item) => Number(item.quantity) <= Number(item.minStock)
+      ),
+    [products]
   );
 
-  const statsMap: Record<string, number> = {
-    products: products.length,
-    categories: categories.length,
-    suppliers: suppliers.length,
-    receipts: receipts.length,
-    writeOffs: writeOffs.length,
-    feedback: feedback.length,
-  };
+  const totalStockUnits = useMemo(
+    () =>
+      products.reduce((sum, item) => sum + Number(item.quantity || 0), 0),
+    [products]
+  );
 
-  const latestReceipts = [...receipts].slice(-5).reverse();
-  const latestWriteOffs = [...writeOffs].slice(-5).reverse();
+  const latestReceipts = [...receipts].slice(-4).reverse();
+  const latestWriteOffs = [...writeOffs].slice(-4).reverse();
+
+  const overviewCards = [
+    {
+      title: "Запасы",
+      value: products.length,
+      note: "товарных позиций в системе",
+      icon: <Boxes className="w-5 h-5" />,
+      tone: "bg-cyan-50 text-cyan-700 border-cyan-100",
+    },
+    {
+      title: "Категории",
+      value: categories.length,
+      note: "групп для классификации",
+      icon: <ChartColumn className="w-5 h-5" />,
+      tone: "bg-violet-50 text-violet-700 border-violet-100",
+    },
+    {
+      title: "Поставщики",
+      value: suppliers.length,
+      note: "активных контрагентов",
+      icon: <Truck className="w-5 h-5" />,
+      tone: "bg-emerald-50 text-emerald-700 border-emerald-100",
+    },
+    {
+      title: "Единиц на складе",
+      value: totalStockUnits,
+      note: "суммарный объём запасов",
+      icon: <PackageCheck className="w-5 h-5" />,
+      tone: "bg-sky-50 text-sky-700 border-sky-100",
+    },
+  ];
 
   return (
-    <div className="text-white">
-      <div className="mb-8 flex flex-col gap-3">
-        <div className="inline-flex w-fit items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-500/10 px-4 py-2 text-sm text-cyan-300">
-          <Warehouse className="w-4 h-4" />
-          Панель управления складом
+    <div className="text-slate-900">
+      <div className="grid xl:grid-cols-[1.15fr_0.85fr] gap-8 mb-8">
+        <div className="rounded-[30px] border border-slate-200 bg-white p-8 shadow-sm">
+          <div className="inline-flex items-center gap-2 rounded-full border border-cyan-100 bg-cyan-50 px-4 py-2 text-sm text-cyan-700">
+            <Activity className="w-4 h-4" />
+            Dashboard мониторинга
+          </div>
+
+          <h2 className="mt-5 text-3xl md:text-4xl font-bold text-slate-950">
+            Контроль состояния складских запасов
+          </h2>
+
+          <p className="mt-5 max-w-3xl text-slate-600 leading-8">
+            Панель отображает основные показатели системы, текущий статус
+            товарных позиций и изменения, связанные с движением запасов.
+            Интерфейс помогает быстро оценить ситуацию на складе и обратить
+            внимание на критически важные участки.
+          </p>
+
+          <div className="mt-8 grid sm:grid-cols-2 gap-4">
+            {overviewCards.map((card) => (
+              <div
+                key={card.title}
+                className="rounded-3xl border border-slate-200 bg-slate-50 p-5"
+              >
+                <div className="flex items-center justify-between">
+                  <div
+                    className={`flex h-11 w-11 items-center justify-center rounded-2xl border ${card.tone}`}
+                  >
+                    {card.icon}
+                  </div>
+                  <span className="text-xs uppercase tracking-[0.18em] text-slate-400">
+                    обзор
+                  </span>
+                </div>
+
+                <div className="mt-5 text-3xl font-bold text-slate-950">
+                  {card.value}
+                </div>
+                <h3 className="mt-2 text-base font-semibold text-slate-900">
+                  {card.title}
+                </h3>
+                <p className="mt-1 text-sm text-slate-500">{card.note}</p>
+              </div>
+            ))}
+          </div>
         </div>
 
-        <h2 className="text-3xl font-bold">Dashboard</h2>
-        <p className="text-slate-400 max-w-3xl">
-          Здесь отображается основная информация о товарах, поступлениях,
-          списаниях, поставщиках и сообщениях. Панель помогает быстро оценить
-          текущее состояние складской системы.
-        </p>
-      </div>
+        <div className="rounded-[30px] border border-amber-100 bg-amber-50 p-8">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-amber-100 bg-white text-amber-600">
+            <CircleGauge className="w-6 h-6" />
+          </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 mb-8">
-        {statCards.map((card) => (
-          <div
-            key={card.key}
-            className={`rounded-3xl border ${card.border} bg-gradient-to-br ${card.bg} p-6 shadow-sm`}
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-900/70 border border-slate-700">
-                {card.icon}
+          <h3 className="mt-5 text-2xl font-bold text-slate-950">
+            Позиции под наблюдением
+          </h3>
+
+          <p className="mt-4 text-slate-700 leading-8">
+            Система выявляет товары, у которых остаток приблизился к
+            минимальному значению или уже достиг критического уровня.
+          </p>
+
+          <div className="mt-8 space-y-4">
+            <div className="rounded-2xl border border-white bg-white px-5 py-4">
+              <div className="text-sm text-slate-500">Проблемных позиций</div>
+              <div className="mt-2 text-3xl font-bold text-amber-600">
+                {lowStockProducts.length}
               </div>
-              <span className="text-slate-400 text-sm">Всего</span>
             </div>
 
-            <div className="mt-6">
-              <h3 className="text-slate-300 text-sm">{card.title}</h3>
-              <p className="mt-2 text-3xl font-bold">
-                {statsMap[card.key] ?? 0}
+            <div className="rounded-2xl border border-white bg-white px-5 py-4">
+              <div className="text-sm text-slate-500">
+                Зарегистрированных поступлений
+              </div>
+              <div className="mt-2 text-2xl font-bold text-slate-950">
+                {receipts.length}
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-white bg-white px-5 py-4">
+              <div className="text-sm text-slate-500">
+                Зарегистрированных списаний
+              </div>
+              <div className="mt-2 text-2xl font-bold text-slate-950">
+                {writeOffs.length}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid xl:grid-cols-[1fr_0.9fr] gap-8 mb-8">
+        <div className="rounded-[30px] border border-slate-200 bg-white p-8 shadow-sm">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-rose-100 bg-rose-50 text-rose-600">
+              <AlertTriangle className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-2xl font-bold text-slate-950">
+                Критические остатки
+              </h3>
+              <p className="text-slate-500 text-sm mt-1">
+                Товары, требующие внимания
               </p>
             </div>
           </div>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-8">
-        <div className="xl:col-span-2 rounded-3xl border border-slate-800 bg-slate-900 p-6">
-          <div className="flex items-center gap-3 mb-5">
-            <AlertTriangle className="w-5 h-5 text-amber-400" />
-            <h3 className="text-xl font-semibold">Товары с низким остатком</h3>
-          </div>
 
           {productsLoading ? (
-            <p className="text-slate-400">Загрузка данных...</p>
+            <p className="text-slate-500">Загрузка данных...</p>
           ) : lowStockProducts.length === 0 ? (
-            <div className="rounded-2xl border border-slate-800 bg-slate-950 p-6 text-slate-400">
-              Все товары имеют достаточный остаток.
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6 text-slate-500">
+              На данный момент все товарные позиции находятся в допустимом
+              диапазоне остатка.
             </div>
           ) : (
-            <div className="overflow-hidden rounded-2xl border border-slate-800">
+            <div className="overflow-hidden rounded-3xl border border-slate-200">
               <Table
                 data={lowStockProducts}
                 autoHeight
                 bordered
                 cellBordered
                 wordWrap="break-word"
-                className="bg-slate-950"
               >
                 <Column width={80} align="center">
                   <HeaderCell>ID</HeaderCell>
                   <Cell dataKey="id" />
                 </Column>
 
-                <Column flexGrow={1.4}>
-                  <HeaderCell>Название</HeaderCell>
+                <Column flexGrow={1.5}>
+                  <HeaderCell>Наименование</HeaderCell>
                   <Cell dataKey="name" />
                 </Column>
 
@@ -181,28 +226,22 @@ const DashboardPage = () => {
 
                 <Column width={120} align="center">
                   <HeaderCell>Остаток</HeaderCell>
-                  <Cell>
-                    {(rowData) => (
-                      <span className="text-amber-400 font-semibold">
-                        {rowData.quantity}
-                      </span>
-                    )}
-                  </Cell>
+                  <Cell dataKey="quantity" />
                 </Column>
 
-                <Column width={160} align="center">
-                  <HeaderCell>Мин. остаток</HeaderCell>
+                <Column width={150} align="center">
+                  <HeaderCell>Мин. уровень</HeaderCell>
                   <Cell dataKey="minStock" />
                 </Column>
 
-                <Column width={180} align="center">
+                <Column width={160} align="center">
                   <HeaderCell>Статус</HeaderCell>
                   <Cell>
                     {(rowData) =>
                       Number(rowData.quantity) === 0 ? (
-                        <Tag color="red">Нет в наличии</Tag>
+                        <Tag color="red">Отсутствует</Tag>
                       ) : (
-                        <Tag color="orange">Заканчивается</Tag>
+                        <Tag color="orange">Низкий остаток</Tag>
                       )
                     }
                   </Cell>
@@ -212,116 +251,78 @@ const DashboardPage = () => {
           )}
         </div>
 
-        <div className="rounded-3xl border border-slate-800 bg-slate-900 p-6">
-          <h3 className="text-xl font-semibold mb-5">Краткая сводка</h3>
+        <div className="rounded-[30px] border border-slate-200 bg-white p-8 shadow-sm">
+          <h3 className="text-2xl font-bold text-slate-950">
+            Операционная активность
+          </h3>
+          <p className="mt-3 text-slate-600 leading-8">
+            Последние действия в системе позволяют отследить, как изменяется
+            состояние запасов на складе за счёт поступлений и списаний.
+          </p>
 
-          <div className="space-y-4">
-            <Panel bordered shaded className="bg-slate-950 border-slate-800">
-              <p className="text-slate-400 text-sm">Общее количество единиц товара</p>
-              <p className="text-2xl font-bold mt-2">
-                {products.reduce(
-                  (sum, item) => sum + Number(item.quantity || 0),
-                  0
-                )}
-              </p>
-            </Panel>
+          <div className="mt-8 grid grid-cols-2 gap-4">
+            <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-5">
+              <div className="text-sm text-slate-500">Последние поступления</div>
+              <div className="mt-2 text-3xl font-bold text-emerald-600">
+                {latestReceipts.length}
+              </div>
+            </div>
 
-            <Panel bordered shaded className="bg-slate-950 border-slate-800">
-              <p className="text-slate-400 text-sm">Проблемных позиций</p>
-              <p className="text-2xl font-bold mt-2 text-amber-400">
-                {lowStockProducts.length}
-              </p>
-            </Panel>
-
-            <Panel bordered shaded className="bg-slate-950 border-slate-800">
-              <p className="text-slate-400 text-sm">Последних сообщений</p>
-              <p className="text-2xl font-bold mt-2 text-pink-400">
-                {feedback.length}
-              </p>
-            </Panel>
+            <div className="rounded-2xl border border-amber-100 bg-amber-50 p-5">
+              <div className="text-sm text-slate-500">Последние списания</div>
+              <div className="mt-2 text-3xl font-bold text-amber-600">
+                {latestWriteOffs.length}
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        <div className="rounded-3xl border border-slate-800 bg-slate-900 p-6">
-          <h3 className="text-xl font-semibold mb-5">Последние поступления</h3>
-
-          {latestReceipts.length === 0 ? (
-            <div className="rounded-2xl border border-slate-800 bg-slate-950 p-6 text-slate-400">
-              Поступлений пока нет.
-            </div>
-          ) : (
-            <div className="overflow-hidden rounded-2xl border border-slate-800">
-              <Table
-                data={latestReceipts}
-                autoHeight
-                bordered
-                cellBordered
-                wordWrap="break-word"
+          <div className="mt-8 space-y-4">
+            {latestReceipts.map((item) => (
+              <div
+                key={`receipt-${item.id}`}
+                className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4"
               >
-                <Column width={80} align="center">
-                  <HeaderCell>ID</HeaderCell>
-                  <Cell dataKey="id" />
-                </Column>
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm text-slate-500">Поступление</p>
+                    <p className="font-semibold text-slate-900 mt-1">
+                      Товар ID: {item.productId}
+                    </p>
+                  </div>
+                  <span className="text-emerald-600 font-semibold">
+                    +{item.quantity}
+                  </span>
+                </div>
+                <p className="text-sm text-slate-500 mt-2">{item.date}</p>
+              </div>
+            ))}
 
-                <Column flexGrow={1}>
-                  <HeaderCell>ID товара</HeaderCell>
-                  <Cell dataKey="productId" />
-                </Column>
-
-                <Column flexGrow={1}>
-                  <HeaderCell>Количество</HeaderCell>
-                  <Cell dataKey="quantity" />
-                </Column>
-
-                <Column flexGrow={1.2}>
-                  <HeaderCell>Дата</HeaderCell>
-                  <Cell dataKey="date" />
-                </Column>
-              </Table>
-            </div>
-          )}
-        </div>
-
-        <div className="rounded-3xl border border-slate-800 bg-slate-900 p-6">
-          <h3 className="text-xl font-semibold mb-5">Последние списания</h3>
-
-          {latestWriteOffs.length === 0 ? (
-            <div className="rounded-2xl border border-slate-800 bg-slate-950 p-6 text-slate-400">
-              Списаний пока нет.
-            </div>
-          ) : (
-            <div className="overflow-hidden rounded-2xl border border-slate-800">
-              <Table
-                data={latestWriteOffs}
-                autoHeight
-                bordered
-                cellBordered
-                wordWrap="break-word"
+            {latestWriteOffs.map((item) => (
+              <div
+                key={`writeoff-${item.id}`}
+                className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4"
               >
-                <Column width={80} align="center">
-                  <HeaderCell>ID</HeaderCell>
-                  <Cell dataKey="id" />
-                </Column>
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm text-slate-500">Списание</p>
+                    <p className="font-semibold text-slate-900 mt-1">
+                      Товар ID: {item.productId}
+                    </p>
+                  </div>
+                  <span className="text-amber-600 font-semibold">
+                    -{item.quantity}
+                  </span>
+                </div>
+                <p className="text-sm text-slate-500 mt-2">{item.date}</p>
+              </div>
+            ))}
 
-                <Column flexGrow={1}>
-                  <HeaderCell>ID товара</HeaderCell>
-                  <Cell dataKey="productId" />
-                </Column>
-
-                <Column flexGrow={1}>
-                  <HeaderCell>Количество</HeaderCell>
-                  <Cell dataKey="quantity" />
-                </Column>
-
-                <Column flexGrow={1.2}>
-                  <HeaderCell>Дата</HeaderCell>
-                  <Cell dataKey="date" />
-                </Column>
-              </Table>
-            </div>
-          )}
+            {latestReceipts.length === 0 && latestWriteOffs.length === 0 && (
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6 text-slate-500">
+                Операции пока не зарегистрированы.
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

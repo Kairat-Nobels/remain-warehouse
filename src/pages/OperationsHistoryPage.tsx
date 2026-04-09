@@ -1,6 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useMemo, useState } from "react";
 import { Input, SelectPicker, Table, Tag } from "rsuite";
+import {
+  Filter,
+  TrendingUp,
+  TrendingDown,
+  Boxes,
+  CalendarRange,
+} from "lucide-react";
 import "rsuite/dist/rsuite.min.css";
 
 import { useAppDispatch, useAppSelector } from "../hooks/hooks";
@@ -86,6 +93,8 @@ const OperationsHistoryPage = () => {
   }, [receipts, writeOffs]);
 
   const filteredOperations = useMemo(() => {
+    const searchValue = search.toLowerCase().trim();
+
     return operations.filter((item) => {
       const productName = getProductName(item.productId).toLowerCase();
       const supplierName = getSupplierName(item.supplierId).toLowerCase();
@@ -93,7 +102,6 @@ const OperationsHistoryPage = () => {
       const reason = String(item.reason || "").toLowerCase();
       const date = String(item.date || "").toLowerCase();
       const typeLabel = item.typeLabel.toLowerCase();
-      const searchValue = search.toLowerCase().trim();
 
       const matchesSearch =
         !searchValue ||
@@ -108,7 +116,7 @@ const OperationsHistoryPage = () => {
 
       return matchesSearch && matchesType;
     });
-  }, [operations, search, typeFilter]);
+  }, [operations, search, typeFilter, products, suppliers]);
 
   const typeOptions = [
     { label: "Все операции", value: null },
@@ -116,106 +124,190 @@ const OperationsHistoryPage = () => {
     { label: "Списания", value: "writeOff" },
   ];
 
+  const totalReceipts = operations.filter((item) => item.type === "receipt").length;
+  const totalWriteOffs = operations.filter((item) => item.type === "writeOff").length;
+  const totalMovedUnits = operations.reduce(
+    (sum, item) => sum + Number(item.quantity || 0),
+    0
+  );
+
   return (
-    <div className="text-white">
-      <div className="mb-6 flex flex-col gap-4">
-        <div>
-          <h2 className="text-3xl font-bold">История операций</h2>
-          <p className="text-slate-400 mt-2">
-            Общий журнал поступлений и списаний товаров на складе.
+    <div className="text-slate-900">
+      <div className="grid xl:grid-cols-[1.1fr_0.9fr] gap-8 mb-8">
+        <div className="rounded-[30px] border border-slate-200 bg-white p-8 shadow-sm">
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">
+            Журнал операций
           </p>
+
+          <h2 className="mt-4 text-3xl md:text-4xl font-bold text-slate-950">
+            История движения складских запасов
+          </h2>
+
+          <p className="mt-5 max-w-3xl text-slate-600 leading-8">
+            Раздел объединяет входящие и исходящие операции в едином журнале.
+            Здесь можно просматривать движение товаров, отслеживать причины
+            списаний и анализировать изменения запасов по датам.
+          </p>
+
+          <div className="mt-8 grid md:grid-cols-2 gap-4">
+            <Input
+              value={search}
+              onChange={(value) => setSearch(value)}
+              placeholder="Поиск по товару, поставщику, дате..."
+              className="!rounded-2xl"
+            />
+
+            <SelectPicker
+              data={typeOptions}
+              value={typeFilter}
+              onChange={(value) => setTypeFilter(value as string | null)}
+              style={{ width: "100%" }}
+              placeholder="Фильтр по типу операции"
+              cleanable
+            />
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input
-            placeholder="Поиск по товару, поставщику, комментарию, дате..."
-            value={search}
-            onChange={(value) => setSearch(value)}
-          />
+        <div className="rounded-[30px] border border-slate-200 bg-slate-50 p-8">
+          <h3 className="text-2xl font-bold text-slate-950">
+            Сводка по операциям
+          </h3>
 
-          <SelectPicker
-            data={typeOptions}
-            value={typeFilter}
-            onChange={(value) => setTypeFilter(value as string | null)}
-            style={{ width: "100%" }}
-            placeholder="Фильтр по типу операции"
-            cleanable
-          />
+          <div className="mt-6 grid grid-cols-2 gap-4">
+            <div className="rounded-2xl border border-emerald-100 bg-white p-5">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700 border border-emerald-100">
+                <TrendingUp className="w-5 h-5" />
+              </div>
+              <div className="mt-4 text-3xl font-bold text-slate-950">
+                {totalReceipts}
+              </div>
+              <p className="mt-1 text-sm text-slate-500">поступлений</p>
+            </div>
+
+            <div className="rounded-2xl border border-amber-100 bg-white p-5">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-50 text-amber-700 border border-amber-100">
+                <TrendingDown className="w-5 h-5" />
+              </div>
+              <div className="mt-4 text-3xl font-bold text-slate-950">
+                {totalWriteOffs}
+              </div>
+              <p className="mt-1 text-sm text-slate-500">списаний</p>
+            </div>
+          </div>
+
+          <div className="mt-4 rounded-2xl border border-slate-200 bg-white px-5 py-4">
+            <div className="flex items-center gap-2 text-sm text-slate-500">
+              <Boxes className="w-4 h-4" />
+              Совокупное движение товаров
+            </div>
+            <div className="mt-2 text-3xl font-bold text-slate-950">
+              {totalMovedUnits}
+            </div>
+          </div>
+
+          <div className="mt-4 rounded-2xl border border-slate-200 bg-white px-5 py-4">
+            <div className="flex items-center gap-2 text-sm text-slate-500">
+              <CalendarRange className="w-4 h-4" />
+              Назначение раздела
+            </div>
+            <div className="mt-2 text-base font-medium text-slate-900 leading-7">
+              Единый журнал нужен для контроля движения запасов и анализа
+              операций склада.
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-3xl border border-slate-800 bg-slate-900">
-        <Table
-          data={filteredOperations}
-          autoHeight
-          bordered
-          cellBordered
-          wordWrap="break-word"
-          hover
-        >
-          <Column width={90} align="center" fixed>
-            <HeaderCell>ID</HeaderCell>
-            <Cell dataKey="originalId" />
-          </Column>
+      <div className="rounded-[30px] border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="mb-5 flex flex-col md:flex-row md:items-end md:justify-between gap-3">
+          <div>
+            <h3 className="text-2xl font-bold text-slate-950">
+              Общий реестр операций
+            </h3>
+            <p className="mt-2 text-slate-500">
+              Найдено записей: {filteredOperations.length}
+            </p>
+          </div>
 
-          <Column width={150} align="center">
-            <HeaderCell>Тип операции</HeaderCell>
-            <Cell>
-              {(rowData: OperationRow) =>
-                rowData.type === "receipt" ? (
-                  <Tag color="green">Поступление</Tag>
-                ) : (
-                  <Tag color="orange">Списание</Tag>
-                )
-              }
-            </Cell>
-          </Column>
+          <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-600">
+            <Filter className="w-4 h-4" />
+            Поиск и фильтрация журнала
+          </div>
+        </div>
 
-          <Column flexGrow={1.8} minWidth={240}>
-            <HeaderCell>Товар</HeaderCell>
-            <Cell>
-              {(rowData: OperationRow) => getProductName(rowData.productId)}
-            </Cell>
-          </Column>
+        <div className="overflow-hidden rounded-[24px] border border-slate-200">
+          <Table
+            data={filteredOperations}
+            autoHeight
+            bordered
+            cellBordered
+            wordWrap="break-word"
+            hover
+          >
+            <Column width={90} align="center" fixed>
+              <HeaderCell>ID</HeaderCell>
+              <Cell dataKey="originalId" />
+            </Column>
 
-          <Column flexGrow={1.4} minWidth={220}>
-            <HeaderCell>Поставщик</HeaderCell>
-            <Cell>
-              {(rowData: OperationRow) => getSupplierName(rowData.supplierId)}
-            </Cell>
-          </Column>
+            <Column width={160} align="center">
+              <HeaderCell>Тип операции</HeaderCell>
+              <Cell>
+                {(rowData: OperationRow) =>
+                  rowData.type === "receipt" ? (
+                    <Tag color="green">Поступление</Tag>
+                  ) : (
+                    <Tag color="orange">Списание</Tag>
+                  )
+                }
+              </Cell>
+            </Column>
 
-          <Column width={110} align="center">
-            <HeaderCell>Кол-во</HeaderCell>
-            <Cell dataKey="quantity" />
-          </Column>
+            <Column flexGrow={1.8} minWidth={240}>
+              <HeaderCell>Товар</HeaderCell>
+              <Cell>
+                {(rowData: OperationRow) => getProductName(rowData.productId)}
+              </Cell>
+            </Column>
 
-          <Column width={140} align="center">
-            <HeaderCell>Сумма</HeaderCell>
-            <Cell>
-              {(rowData: OperationRow) =>
-                rowData.type === "receipt" ? `${rowData.amount} сом` : "—"
-              }
-            </Cell>
-          </Column>
+            <Column flexGrow={1.4} minWidth={220}>
+              <HeaderCell>Поставщик</HeaderCell>
+              <Cell>
+                {(rowData: OperationRow) => getSupplierName(rowData.supplierId)}
+              </Cell>
+            </Column>
 
-          <Column flexGrow={1.2} minWidth={180}>
-            <HeaderCell>Причина</HeaderCell>
-            <Cell>
-              {(rowData: OperationRow) => rowData.reason || "—"}
-            </Cell>
-          </Column>
+            <Column width={110} align="center">
+              <HeaderCell>Кол-во</HeaderCell>
+              <Cell dataKey="quantity" />
+            </Column>
 
-          <Column flexGrow={1.6} minWidth={240}>
-            <HeaderCell>Комментарий</HeaderCell>
-            <Cell dataKey="comment" />
-          </Column>
+            <Column width={140} align="center">
+              <HeaderCell>Сумма</HeaderCell>
+              <Cell>
+                {(rowData: OperationRow) =>
+                  rowData.type === "receipt" ? `${rowData.amount} сом` : "—"
+                }
+              </Cell>
+            </Column>
 
-          <Column width={150} align="center">
-            <HeaderCell>Дата</HeaderCell>
-            <Cell dataKey="date" />
-          </Column>
-        </Table>
+            <Column flexGrow={1.2} minWidth={180}>
+              <HeaderCell>Причина</HeaderCell>
+              <Cell>
+                {(rowData: OperationRow) => rowData.reason || "—"}
+              </Cell>
+            </Column>
+
+            <Column flexGrow={1.6} minWidth={240}>
+              <HeaderCell>Комментарий</HeaderCell>
+              <Cell dataKey="comment" />
+            </Column>
+
+            <Column width={150} align="center">
+              <HeaderCell>Дата</HeaderCell>
+              <Cell dataKey="date" />
+            </Column>
+          </Table>
+        </div>
       </div>
     </div>
   );

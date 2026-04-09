@@ -24,6 +24,7 @@ import SuppliersPage from "./pages/SuppliersPage";
 import ReceiptsPage from "./pages/ReceiptsPage";
 import WriteOffsPage from "./pages/WriteOffsPage";
 import OperationsHistoryPage from "./pages/OperationsHistoryPage";
+import FeedbackPage from "./pages/FeedbackPage";
 
 function App() {
   const location = useLocation();
@@ -110,6 +111,14 @@ function App() {
               element={
                 <AdminRoute>
                   <OperationsHistoryPage />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="feedback"
+              element={
+                <AdminRoute>
+                  <FeedbackPage />
                 </AdminRoute>
               }
             />
