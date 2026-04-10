@@ -127,27 +127,29 @@ const AdminDashboardMain: React.FC = () => {
           </div>
 
           {!collapsed && (
-            <div>
-              <div
-                style={{
-                  fontSize: 17,
-                  fontWeight: 700,
-                  color: "#0f172a",
-                  lineHeight: 1.2,
-                }}
-              >
-                Stock Vision
+            <a href="/" style={{ textDecoration: "none" }}>
+              <div>
+                <div
+                  style={{
+                    fontSize: 17,
+                    fontWeight: 700,
+                    color: "#0f172a",
+                    lineHeight: 1.2,
+                  }}
+                >
+                  Stock Vision
+                </div>
+                <div
+                  style={{
+                    fontSize: 12,
+                    color: "#64748b",
+                    marginTop: 3,
+                  }}
+                >
+                  Мониторинг складских запасов
+                </div>
               </div>
-              <div
-                style={{
-                  fontSize: 12,
-                  color: "#64748b",
-                  marginTop: 3,
-                }}
-              >
-                Мониторинг складских запасов
-              </div>
-            </div>
+            </a>
           )}
         </div>
 
